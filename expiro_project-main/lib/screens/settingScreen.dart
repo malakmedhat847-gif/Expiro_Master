@@ -171,6 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                ),
           );
      }
+
      void _showClearDialog() {
           final c     = AppColors.of(context);
           final store = ItemsScope.read(context);
@@ -247,19 +248,29 @@ class _SettingsScreenState extends State<SettingsScreen>
                               child: Column(
                                    crossAxisAlignment: CrossAxisAlignment.start,
                                    children: [
-
                                         FadeTransition(
                                              opacity: _headerFade,
                                              child: SlideTransition(
                                                   position: _headerSlide,
-                                                  child: Column(
+                                                  child: Row(
+                                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                        crossAxisAlignment: CrossAxisAlignment.start,
                                                        children: [
-                                                            Text('Settings',
-                                                                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: c.textPrimary)),
-                                                            const SizedBox(height: 4),
-                                                            Text('Customize your experience',
-                                                                style: TextStyle(fontSize: 14, color: c.textSecondary)),
+                                                            Column(
+                                                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                                                 children: [
+                                                                      Text('Settings',
+                                                                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: c.textPrimary)),
+                                                                      const SizedBox(height: 4),
+                                                                      Text('Customize your experience',
+                                                                          style: TextStyle(fontSize: 14, color: c.textSecondary)),
+                                                                 ],
+                                                            ),
+                                                            Image.asset(
+                                                                 'assets/images/1Artboard 1.png',
+                                                                 height: 60,
+                                                                 fit: BoxFit.contain,
+                                                            ),
                                                        ],
                                                   ),
                                              ),
@@ -279,12 +290,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                                                             value: _darkMode,
                                                             onChanged: _toggleDarkMode,
                                                             activeColor: Colors.white,
-                                                            activeTrackColor: Color(
-                                                                0xFF7715D1),
-                                                            inactiveThumbColor: Color(
-                                                                0xFF7615D0),
-                                                            inactiveTrackColor: isDark ? Colors.red :Color(
-                                                                0xFF462265),
+                                                            activeTrackColor: const Color(0xFF7715D1),
+                                                            inactiveThumbColor: const Color(0xFF7615D0),
+                                                            inactiveTrackColor: isDark ? Colors.red : const Color(0xFF462265),
                                                        ),
                                                   ),
                                              ],
@@ -304,13 +312,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                                                             value: _notificationsEnabled,
                                                             onChanged: _toggleNotifications,
                                                             activeColor: Colors.white,
-                                                            activeTrackColor: Color(
-                                                                0xFF7615D0),
-                                                            inactiveThumbColor: Color(
-                                                                0xFF7515CF),
-                                                            inactiveTrackColor: isDark ? Color(
-                                                                0xFF3F3F47) : Color(
-                                                                0xFF462265),
+                                                            activeTrackColor: const Color(0xFF7615D0),
+                                                            inactiveThumbColor: const Color(0xFF7515CF),
+                                                            inactiveTrackColor: isDark ? const Color(0xFF3F3F47) : const Color(0xFF462265),
                                                        ),
                                                   ),
                                                   Divider(height: 1, color: c.divider),
@@ -373,8 +377,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                         _animated(4, Container(
                                              padding: const EdgeInsets.all(16),
                                              decoration: BoxDecoration(
-                                                  color: isDark ? const Color(
-                                                      0xFF281C30) : Colors.white,
+                                                  color: isDark ? const Color(0xFF281C30) : Colors.white,
                                                   borderRadius: BorderRadius.circular(12),
                                                   border: Border.all(color: AppColors.teal.withOpacity(isDark ? 1.0 : 1.0)),
                                              ),
@@ -387,8 +390,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                                                  color: AppColors.purple.withOpacity(0.15),
                                                                  borderRadius: BorderRadius.circular(8),
                                                             ),
-                                                            child: const Icon(Icons.info_outline, size: 18, color: Color(
-                                                                0xFF3ECECE)),
+                                                            child: const Icon(Icons.info_outline, size: 18, color: Color(0xFF3ECECE)),
                                                        ),
                                                        const SizedBox(width: 12),
                                                        Expanded(
@@ -463,8 +465,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                                        duration: const Duration(milliseconds: 220),
                                                        margin: const EdgeInsets.all(4),
                                                        decoration: BoxDecoration(
-                                                            color: active ? Color(
-                                                                0xFF7515CF) : Colors.transparent,
+                                                            color: active ? const Color(0xFF7515CF) : Colors.transparent,
                                                             borderRadius: BorderRadius.circular(8),
                                                             boxShadow: active
                                                                 ? [BoxShadow(

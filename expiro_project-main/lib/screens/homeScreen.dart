@@ -1,7 +1,6 @@
 import 'package:expiro_project/screens/profileScreen.dart';
 import 'package:expiro_project/screens/settingScreen.dart';
 import 'package:expiro_project/screens/statsScreen.dart';
-import 'package:expiro_project/screens/favorites_screen.dart';
 import 'package:expiro_project/state/items_store.dart';
 import 'package:expiro_project/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -114,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+
   Future<void> _handleDelete(BuildContext ctx, int id) async {
     final store   = ItemsScope.read(ctx);
     final deleted = await store.deleteItem(id);
@@ -161,6 +161,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     final c     = AppColors.of(context);
@@ -176,7 +177,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final pages = [
       _buildHome(c, store),
       const StatsScreen(),
-      const FavoritesScreen(),
       SettingsScreen(
         onClearAll: () => store.clearAll(),
       ),
@@ -202,12 +202,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               unselectedItemColor: c.navUnselected,
               showUnselectedLabels: true,
               elevation: 0,
-              type: BottomNavigationBarType.fixed,
               items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home_outlined),      activeIcon: Icon(Icons.home),      label: 'Home'),
-                BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined),  activeIcon: Icon(Icons.bar_chart), label: 'Stats'),
-                BottomNavigationBarItem(icon: Icon(Icons.favorite_border),     activeIcon: Icon(Icons.favorite),  label: 'Favorites'),
-                BottomNavigationBarItem(icon: Icon(Icons.settings_outlined),   activeIcon: Icon(Icons.settings),  label: 'Settings'),
+                BottomNavigationBarItem(icon: Icon(Icons.home_outlined),     activeIcon: Icon(Icons.home),      label: 'Home'),
+                BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Stats'),
+                BottomNavigationBarItem(icon: Icon(Icons.settings_outlined),  activeIcon: Icon(Icons.settings),  label: 'Settings'),
               ],
             ),
           ),
@@ -267,6 +265,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
 
+
             SizeTransition(
               sizeFactor: _searchHeight,
               axisAlignment: -1,
@@ -325,6 +324,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
             const SizedBox(height: 14),
 
+
             if (!_searchVisible)
               FadeTransition(
                 opacity: _filterFade,
@@ -340,8 +340,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         border: Border.all(color: AppColors.teal),
                       ),
                       child: Row(
-                        children: ['All', 'Expired', 'Soon', 'Fresh'].map((f) {
-                          final active = _filter == f;
+                        children: ['All', 'Fav', 'Expired', 'Soon', 'Fresh'].map((f) {
+                          final active  = _filter == f;
+                          final isFav   = f == 'Fav';
                           return Expanded(
                             child: GestureDetector(
                               onTap: () => setState(() => _filter = f),
@@ -349,18 +350,58 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 duration: const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: active ? AppColors.purple : Colors.transparent,
+                                  color: active
+                                      ? (isFav
+                                      ? const Color(0xFFB8860B)   // gold when fav active
+                                      : AppColors.purple)
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(26),
                                   boxShadow: active
-                                      ? [BoxShadow(color: AppColors.purple.withOpacity(0.3), blurRadius: 6)]
+                                      ? [BoxShadow(
+                                      color: (isFav
+                                          ? const Color(0xFFFFB300)
+                                          : AppColors.purple)
+                                          .withOpacity(0.35),
+                                      blurRadius: 6)]
                                       : [],
                                 ),
                                 child: Center(
-                                  child: Text(f, style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-                                    color: active ? Colors.white : c.textSecondary,
-                                  )),
+                                  child: isFav
+                                      ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        active
+                                            ? Icons.star_rounded
+                                            : Icons.star_outline_rounded,
+                                        size: 13,
+                                        color: active
+                                            ? Colors.white
+                                            : const Color(0xFFFFB300),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text('Fav',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: active
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: active
+                                                ? Colors.white
+                                                : const Color(0xFFFFB300),
+                                          )),
+                                    ],
+                                  )
+                                      : Text(f,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: active
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: active
+                                            ? Colors.white
+                                            : c.textSecondary,
+                                      )),
                                 ),
                               ),
                             ),
@@ -383,13 +424,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(_searchQuery.isNotEmpty ? Icons.search_off_rounded : Icons.filter_alt_outlined,
-                          size: 60, color: c.textHint),
+                      Icon(
+                        _searchQuery.isNotEmpty
+                            ? Icons.search_off_rounded
+                            : _filter == 'Fav'
+                            ? Icons.star_outline_rounded
+                            : Icons.filter_alt_outlined,
+                        size: 60,
+                        color: _filter == 'Fav' && _searchQuery.isEmpty
+                            ? const Color(0xFFFFB300)
+                            : c.textHint,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         _searchQuery.isNotEmpty
                             ? 'No results for "$_searchQuery"'
+                            : _filter == 'Fav'
+                            ? 'No favorites yet.\nSwipe right on any item to add it!'
                             : 'No items yet. Add your first item!',
+                        textAlign: TextAlign.center,
                         style: TextStyle(color: c.textSecondary, fontSize: 14),
                       ),
                     ],
@@ -449,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 gradient: isDark
                     ? const LinearGradient(
-                    colors: [Color(0xFF431D60), Color(0xFF441D63)],
+                    colors: [const Color(0xFF431D60), const Color(0xFF441D63)],
                     begin: Alignment.topLeft, end: Alignment.bottomRight)
                     : null,
                 color: isDark ? null : const Color(0xFFEBEBF4),
@@ -467,13 +520,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       '${(_cardFades[index].value * value).round()}',
                       style: TextStyle(
                         fontSize: 28, fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF43185A),
+                        color: isDark ? Colors.white :Color(
+                            0xFF43185A),
                       ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(label, textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFFFFFFF) : c.textSecondary)),
+                      style: TextStyle(fontSize: 10, color: isDark ? Color(
+                          0xFFFFFFFF) : c.textSecondary)),
                 ],
               ),
             ),
@@ -490,159 +545,282 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         : item.daysLeft == 0 ? 'Expires today'
         : 'Expires in ${item.daysLeft} day(s)';
 
-    return Dismissible(
-      key: Key('dismissible_${item.id}'),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => _handleDelete(context, item.id),
-      background: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: AppColors.red.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 22),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.delete_outline, color: Colors.white, size: 26),
-            SizedBox(height: 4),
-            Text('Delete', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-      child: TweenAnimationBuilder<double>(
-        key: ValueKey(item.id),
-        tween: Tween(begin: 0.0, end: 1.0),
-        duration: Duration(milliseconds: 350 + (index * 50).clamp(0, 350)),
-        curve: Curves.easeOutCubic,
-        builder: (_, v, child) =>
-            Opacity(opacity: v, child: Transform.translate(offset: Offset(0, 28 * (1 - v)), child: child)),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF281C30) : const Color(0xFFEAEAF2),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.teal.withOpacity(isDark ? 1.0 : 1.0), width: isDark ? 1.8 : 2.0),
-            boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2))],
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(item.id),
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 350 + (index * 50).clamp(0, 350)),
+      curve: Curves.easeOutCubic,
+      builder: (_, v, child) =>
+          Opacity(opacity: v, child: Transform.translate(offset: Offset(0, 28 * (1 - v)), child: child)),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Dismissible(
+          key: ValueKey('dismiss_${item.id}'),
+          direction: DismissDirection.horizontal,
+          // ── Swipe RIGHT → Favorite / Unfavorite ─────────────────────
+          background: Container(
+            decoration: BoxDecoration(
+              color: item.isFavorite
+                  ? const Color(0xFF5C8A3C)   // green = remove from fav
+                  : const Color(0xFFFFB300),   // amber  = add to fav
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 26),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  item.isFavorite
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.isFavorite ? 'Remove Fav' : 'Favorite',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            children: [
-              // ── Top row ──────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(
-                        color: item.statusColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
+          // ── Swipe LEFT → Delete ──────────────────────────────────────
+          secondaryBackground: Container(
+            decoration: BoxDecoration(
+              color: AppColors.red,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 26),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.delete_rounded, color: Colors.white, size: 30),
+                SizedBox(height: 4),
+                Text('Delete',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          confirmDismiss: (direction) async {
+            if (direction == DismissDirection.startToEnd) {
+              // Toggle favorite — never actually dismiss the card
+              ItemsScope.read(context).toggleFavorite(item.id);
+              // Show feedback snackbar
+              if (mounted) {
+                final isNowFav = !item.isFavorite;
+                ScaffoldMessenger.of(context)
+                  ..clearSnackBars()
+                  ..showSnackBar(SnackBar(
+                    content: Row(children: [
+                      Icon(
+                        isNowFav
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: isNowFav
+                            ? const Color(0xFFFFB300)
+                            : Colors.white54,
+                        size: 18,
                       ),
-                      child: Icon(item.type.icon, color: item.statusColor, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHighlightedName(c, item.name),
-                          const SizedBox(height: 2),
-                          Text(item.type.label, style: TextStyle(color: c.textSecondary, fontSize: 12)),
-                          const SizedBox(height: 2),
-                          Text(daysText, style: TextStyle(color: item.statusColor, fontSize: 12, fontWeight: FontWeight.w500)),
-                        ],
+                      const SizedBox(width: 10),
+                      Text(
+                        isNowFav
+                            ? '"${item.name}" added to Favorites'
+                            : '"${item.name}" removed from Favorites',
+                        style: const TextStyle(fontSize: 13),
                       ),
+                    ]),
+                    backgroundColor: const Color(0xFF0A0A14),
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                          color: AppColors.teal.withOpacity(0.4)),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: item.statusColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
+                    duration: const Duration(seconds: 2),
+                  ));
+              }
+              return false; // card stays in list
+            } else {
+              // Delete with UNDO
+              _handleDelete(context, item.id);
+              return false; // store handles removal
+            }
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF281C30)
+                  : const Color(0xFFEAEAF2),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: AppColors.teal.withOpacity(isDark ? 1.0 : 1.0),
+                  width: isDark ? 1.8 : 2.0),
+              boxShadow: [
+                BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2))
+              ],
+            ),
+            child: Column(
+              children: [
+                // ── Main row ─────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44, height: 44,
+                        decoration: BoxDecoration(
+                          color: item.statusColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(item.type.icon,
+                            color: item.statusColor, size: 22),
                       ),
-                      child: Text(item.statusLabel,
-                          style: TextStyle(color: item.statusColor, fontSize: 11, fontWeight: FontWeight.w600)),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => ItemsScope.read(context).toggleFavorite(item.id),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHighlightedName(c, item.name),
+                            const SizedBox(height: 2),
+                            Text(item.type.label,
+                                style: TextStyle(
+                                    color: c.textSecondary, fontSize: 12)),
+                            const SizedBox(height: 2),
+                            Text(daysText,
+                                style: TextStyle(
+                                    color: item.statusColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                      ),
+                      // ── Favorite star (visible when favorited) ──
+                      if (item.isFavorite) ...[
+                        const Icon(Icons.star_rounded,
+                            color: Color(0xFFFFB300), size: 18),
+                        const SizedBox(width: 6),
+                      ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: item.statusColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(item.statusLabel,
+                            style: TextStyle(
+                                color: item.statusColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Bottom row — no Delete button ────────────────────
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.15)
+                        : const Color(0xFFE8E5F5),
+                    borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(13)),
+                  ),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  child: Row(
+                    children: [
+                      Icon(Icons.layers_outlined,
+                          size: 14, color: c.textSecondary),
+                      const SizedBox(width: 5),
+                      Text('Qty:',
+                          style: TextStyle(
+                              color: c.textSecondary, fontSize: 13)),
+                      const SizedBox(width: 8),
+                      _QtyBtn(
+                        icon: Icons.remove,
+                        onTap: () => ItemsScope.read(context)
+                            .updateQuantity(item.id, -1),
+                        isDark: isDark,
+                        color: c.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
                         transitionBuilder: (child, anim) =>
                             ScaleTransition(scale: anim, child: child),
-                        child: Icon(
-                          item.isFavorite ? Icons.favorite : Icons.favorite_border,
-                          key: ValueKey(item.isFavorite),
-                          color: item.isFavorite ? Colors.redAccent : c.textSecondary,
-                          size: 22,
+                        child: Text(
+                          '${item.quantity}',
+                          key: ValueKey(item.quantity),
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: c.textPrimary),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── Bottom row: qty + edit (NO delete button) ────────────────
-              Container(
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black.withOpacity(0.15) : const Color(0xFFE8E5F5),
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(13)),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.layers_outlined, size: 13, color: c.textSecondary),
-                    const SizedBox(width: 4),
-                    Text('Qty:', style: TextStyle(color: c.textSecondary, fontSize: 12)),
-                    const SizedBox(width: 8),
-                    // ── Minus button (bigger) ──────────────────────────────
-                    _QtyBtn(
-                      icon: Icons.remove,
-                      onTap: () => ItemsScope.read(context).updateQuantity(item.id, -1),
-                      isDark: isDark,
-                      color: c.textSecondary,
-                    ),
-                    const SizedBox(width: 8),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                      child: Text(
-                        '${item.quantity}',
-                        key: ValueKey(item.quantity),
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: c.textPrimary),
+                      const SizedBox(width: 8),
+                      _QtyBtn(
+                        icon: Icons.add,
+                        onTap: () => ItemsScope.read(context)
+                            .updateQuantity(item.id, 1),
+                        isDark: isDark,
+                        color: const Color(0xFF332A3A),
+                        filled: true,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // ── Plus button (bigger) ───────────────────────────────
-                    _QtyBtn(
-                      icon: Icons.add,
-                      onTap: () => ItemsScope.read(context).updateQuantity(item.id, 1),
-                      isDark: isDark,
-                      color: const Color(0xFF332A3A),
-                      filled: true,
-                    ),
-                    const Spacer(),
-                    // ── Edit button (bigger, no delete) ───────────────────
-                    GestureDetector(
-                      onTap: () => _openEditSheet(item),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-                        decoration: BoxDecoration(
-                          color: AppColors.purple.withOpacity(isDark ? 0.15 : 0.10),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.purple.withOpacity(0.3)),
+                      const Spacer(),
+                      // ── Favorite star button ──────────────────────
+                      _FavBtn(
+                        isFavorite: item.isFavorite,
+                        onTap: () =>
+                            ItemsScope.read(context).toggleFavorite(item.id),
+                      ),
+                      const SizedBox(width: 8),
+                      // Edit button
+                      GestureDetector(
+                        onTap: () => _openEditSheet(item),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.purple
+                                .withOpacity(isDark ? 0.15 : 0.10),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: AppColors.purple.withOpacity(0.3)),
+                          ),
+                          child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.edit_outlined,
+                                    size: 15, color: Color(0xFF2E9B9B)),
+                                SizedBox(width: 5),
+                                Text('Edit',
+                                    style: TextStyle(
+                                        color: Color(0xFF2E9A9A),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
+                              ]),
                         ),
-                        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.edit_outlined, size: 16, color: Color(0xFF2E9B9B)),
-                          SizedBox(width: 6),
-                          Text('Edit', style: TextStyle(color: Color(0xFF2E9A9A), fontSize: 13, fontWeight: FontWeight.w600)),
-                        ]),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -712,7 +890,8 @@ class _AddItemSheetState extends State<AddItemSheet> with SingleTickerProviderSt
       initialDate: DateTime.now().add(const Duration(days: 7)),
       firstDate: DateTime(2000), lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: AppColors.purple)),
+        data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: AppColors.purple
+        )),
         child: child!,
       ),
     );
@@ -735,8 +914,10 @@ class _AddItemSheetState extends State<AddItemSheet> with SingleTickerProviderSt
     final c          = AppColors.of(context);
     final isDark     = c.isDark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final sheetBg    = isDark ? const Color(0xFF020202) : const Color(0xFFE4FCFD);
-    final typeCardBg = isDark ? const Color(0xFF291A2F) : const Color(0xFFE2E1EC);
+    final sheetBg    = isDark ? const Color(0xFF020202) : Color(
+        0xFFE4FCFD);
+    final typeCardBg = isDark ? const Color(0xFF291A2F) : const Color(
+        0xFFE2E1EC);
 
     return FadeTransition(
       opacity: _sheetFade,
@@ -792,7 +973,8 @@ class _AddItemSheetState extends State<AddItemSheet> with SingleTickerProviderSt
                           child: Stack(children: [
                             if (selected) Positioned(top: 5, right: 5, child: Icon(Icons.check, size: 11, color: AppColors.teal)),
                             Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              Icon(type.icon, size: 24, color: selected ? AppColors.teal : c.textSecondary),
+                              Icon(type.icon, size: 24, color: selected ? AppColors.teal
+                                  : c.textSecondary),
                               const SizedBox(height: 5),
                               Text(type.label, textAlign: TextAlign.center,
                                   style: TextStyle(fontSize: 11, color: selected ? AppColors.teal : c.textSecondary)),
@@ -824,19 +1006,21 @@ class _AddItemSheetState extends State<AddItemSheet> with SingleTickerProviderSt
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(color: isDark ? const Color(0xFF2D2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
+                    decoration: BoxDecoration(color: isDark ? const Color(
+                        0xFF2D2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
                     child: Row(children: [
                       GestureDetector(
                         onTap: () { if (_quantity > 1) setState(() => _quantity--); },
                         child: Container(width: 32, height: 32,
-                            decoration: BoxDecoration(color: isDark ? const Color(0xFF2E1D30) : c.card, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.teal.withOpacity(0.3))),
+                            decoration: BoxDecoration(color: isDark ? const Color(
+                                0xFF2E1D30) : c.card, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.teal.withOpacity(0.3))),
                             child: Icon(Icons.remove, size: 16, color: c.textPrimary)),
                       ),
                       Expanded(child: Center(child: Text('$_quantity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary)))),
                       GestureDetector(
                         onTap: () => setState(() => _quantity++),
                         child: Container(width: 32, height: 32,
-                            decoration: const BoxDecoration(color: Color(0xFF2E1D30), borderRadius: BorderRadius.all(Radius.circular(8))),
+                            decoration: BoxDecoration(color: Color(0xFF2E1D30), borderRadius: BorderRadius.circular(8)),
                             child: const Icon(Icons.add, size: 16, color: Colors.white)),
                       ),
                     ]),
@@ -848,7 +1032,8 @@ class _AddItemSheetState extends State<AddItemSheet> with SingleTickerProviderSt
                     onTap: _pickDate,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(color: isDark ? const Color(0xFF2D2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
+                      decoration: BoxDecoration(color: isDark ? const Color(
+                          0xFF2D2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
                       child: Row(children: [
                         Expanded(child: Text(
                           _selectedDate == null ? 'mm/dd/yyyy'
@@ -882,7 +1067,7 @@ class _AddItemSheetState extends State<AddItemSheet> with SingleTickerProviderSt
 }
 
 
-// ── QtyBtn: bigger size ───────────────────────────────────────────────────────
+
 class _QtyBtn extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -919,14 +1104,80 @@ class _QtyBtnState extends State<_QtyBtn> with SingleTickerProviderStateMixin {
       child: ScaleTransition(
         scale: _scale,
         child: Container(
-          width: 32,   // ← كان 22، كبّرناه لـ 32
-          height: 32,  // ← كان 22، كبّرناه لـ 32
+          width: 29, height: 29,
           decoration: BoxDecoration(
             color: widget.filled ? widget.color : (widget.isDark ? Colors.white.withOpacity(0.08) : widget.color.withOpacity(0.10)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: widget.color.withOpacity(widget.filled ? 0 : 0.4), width: 1),
           ),
-          child: Icon(widget.icon, size: 18, color: widget.filled ? Colors.white : widget.color),  // ← أيقونة أكبر
+          child: Icon(widget.icon, size: 16, color: widget.filled ? Colors.white : widget.color),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+// ── Tappable favorite star button ────────────────────────────────────────────
+class _FavBtn extends StatefulWidget {
+  final bool isFavorite;
+  final VoidCallback onTap;
+  const _FavBtn({required this.isFavorite, required this.onTap});
+
+  @override
+  State<_FavBtn> createState() => _FavBtnState();
+}
+
+class _FavBtnState extends State<_FavBtn> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl  = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0),  weight: 50),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  void _handleTap() {
+    _ctrl.forward(from: 0);
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isFav = widget.isFavorite;
+    return GestureDetector(
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: _scale,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 34, height: 34,
+          decoration: BoxDecoration(
+            color: isFav
+                ? const Color(0xFFFFB300).withOpacity(0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
+              color: isFav
+                  ? const Color(0xFFFFB300).withOpacity(0.6)
+                  : Colors.grey.withOpacity(0.3),
+              width: 1.2,
+            ),
+          ),
+          child: Icon(
+            isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: 18,
+            color: isFav ? const Color(0xFFFFB300) : Colors.grey,
+          ),
         ),
       ),
     );
@@ -1026,7 +1277,8 @@ class _EditItemSheetState extends State<EditItemSheet> with SingleTickerProvider
                       Row(children: [
                         Container(width: 28, height: 28,
                             decoration: BoxDecoration(color: AppColors.purple.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(Icons.edit_outlined, size: 14, color: Color(0xFFFFFFFF))),
+                            child: const Icon(Icons.edit_outlined, size: 14, color: Color(
+                                0xFFFFFFFF))),
                         const SizedBox(width: 8),
                         Text('Edit Item', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: c.textPrimary)),
                       ]),
@@ -1091,12 +1343,14 @@ class _EditItemSheetState extends State<EditItemSheet> with SingleTickerProvider
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(color: isDark ? const Color(0xFF2E2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
+                    decoration: BoxDecoration(color: isDark ? const Color(
+                        0xFF2E2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
                     child: Row(children: [
                       GestureDetector(
                         onTap: () { if (_quantity > 1) setState(() => _quantity--); },
                         child: Container(width: 32, height: 32,
-                            decoration: BoxDecoration(color: isDark ? const Color(0xFF2D1A2F) : c.card, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.teal.withOpacity(0.3))),
+                            decoration: BoxDecoration(color: isDark ? const Color(
+                                0xFF2D1A2F) : c.card, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.teal.withOpacity(0.3))),
                             child: Icon(Icons.remove, size: 16, color: c.textPrimary)),
                       ),
                       Expanded(child: Center(child: Text('$_quantity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary)))),
@@ -1115,7 +1369,8 @@ class _EditItemSheetState extends State<EditItemSheet> with SingleTickerProvider
                     onTap: _pickDate,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(color: isDark ? const Color(0xFF2E2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
+                      decoration: BoxDecoration(color: isDark ? const Color(
+                          0xFF2E2E2B) : c.inputBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.teal.withOpacity(0.4))),
                       child: Row(children: [
                         Expanded(child: Text(
                           _selectedDate == null ? 'mm/dd/yyyy'

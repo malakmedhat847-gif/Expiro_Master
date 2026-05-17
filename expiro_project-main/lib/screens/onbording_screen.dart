@@ -79,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Future<void> _goToLogin() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_launched', false);
+    await prefs.setBool('has_launched', true); // ✅ الإصلاح: true مش false
 
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -222,7 +222,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       padding: const EdgeInsets.fromLTRB(28, 24, 28, 36),
       child: Column(
         children: [
-          // Dots
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(_pages.length, (i) {
@@ -240,7 +239,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             }),
           ),
           const SizedBox(height: 32),
-
           GestureDetector(
             onTap: _nextPage,
             child: AnimatedSwitcher(

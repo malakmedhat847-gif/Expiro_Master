@@ -149,14 +149,25 @@ class _StatsScreenState extends State<StatsScreen>
       opacity: _headerFade,
       child: SlideTransition(
         position: _headerSlide,
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Statistics',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: c.textPrimary)),
-            const SizedBox(height: 4),
-            Text('Track your inventory insights',
-                style: TextStyle(fontSize: 13, color: c.textSecondary)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Statistics',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: c.textPrimary)),
+                const SizedBox(height: 4),
+                Text('Track your inventory insights',
+                    style: TextStyle(fontSize: 13, color: c.textSecondary)),
+              ],
+            ),
+            Image.asset(
+              'assets/images/1Artboard 1.png',
+              height: 60,
+              fit: BoxFit.contain,
+            ),
           ],
         ),
       ),
@@ -209,7 +220,7 @@ class _StatsScreenState extends State<StatsScreen>
                 decoration: BoxDecoration(
                   gradient: isDark
                       ? const LinearGradient(
-                      colors: [const Color(0xFF452260), const Color(0xFF3D2481)],
+                      colors: [Color(0xFF452260), Color(0xFF3D2481)],
                       begin: Alignment.topLeft, end: Alignment.bottomRight)
                       : null,
                   color: isDark ? null : const Color(0xFFEEECF6),
@@ -226,8 +237,7 @@ class _StatsScreenState extends State<StatsScreen>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(item['icon'] as IconData, color: Color(
-                            0xFF000000), size: 22),
+                        Icon(item['icon'] as IconData, color: const Color(0xFF000000), size: 22),
                         const SizedBox(height: 12),
                         AnimatedBuilder(
                           animation: _gridCtrl,
@@ -243,8 +253,7 @@ class _StatsScreenState extends State<StatsScreen>
                         Text('${item['label']}',
                             style: TextStyle(
                               fontSize: 10,
-                              color: isDark ? Colors.white : const Color(
-                                  0xFF000000),
+                              color: isDark ? Colors.white : const Color(0xFF000000),
                             )),
                       ],
                     ),
@@ -275,7 +284,7 @@ class _StatsScreenState extends State<StatsScreen>
         decoration: BoxDecoration(
           gradient: isDark
               ? const LinearGradient(
-              colors: [const Color(0xFF442263), const Color(0xFF3E247D)],
+              colors: [Color(0xFF442263), Color(0xFF3E247D)],
               begin: Alignment.topLeft, end: Alignment.bottomRight)
               : null,
           color: isDark ? null : const Color(0xFFF0EDF8),
@@ -306,8 +315,7 @@ class _StatsScreenState extends State<StatsScreen>
                         soonPct: soonPct,
                         freshPct: freshPct,
                         progress: _pieSweep.value,
-                        holeColor: isDark ? const Color(0xFF1C1040) :Color(
-                            0xFFE2E1EC),
+                        holeColor: isDark ? const Color(0xFF1C1040) : const Color(0xFFE2E1EC),
                         textColor: isDark ? Colors.white : const Color(0xFF0A0010),
                       ),
                     ),
@@ -370,7 +378,7 @@ class _StatsScreenState extends State<StatsScreen>
         decoration: BoxDecoration(
           gradient: isDark
               ? const LinearGradient(
-              colors: [const Color(0xFF442264), const Color(0xFF3E247A)],
+              colors: [Color(0xFF442264), Color(0xFF3E247A)],
               begin: Alignment.topLeft, end: Alignment.bottomRight)
               : null,
           color: isDark ? null : const Color(0xFFEEECF6),

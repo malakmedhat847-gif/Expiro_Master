@@ -216,7 +216,7 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 200));
     _loadingCtrl.forward();
 
-  
+
     final store = ItemsScope.read(context);
     _counterCtrl.forward();
     await store.load();
