@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../service/prefs_keys.dart';
+import '../state/items_store.dart';
 import 'homeScreen.dart';
 import 'login_screen.dart';
 
@@ -125,10 +127,24 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     setState(() => _isLoading = true);
 
+    final email = _emailController.text.trim();
+    final name  = _nameController.text.trim();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_name',  _nameController.text.trim());
-    await prefs.setString('profile_email', _emailController.text.trim());
-    await prefs.setBool('is_logged_in', true);
+
+    // 1. Set the current user ID FIRST (namespace anchor).
+    await prefs.setString(PrefsKeys.currentUserId, email);
+    await prefs.setBool(PrefsKeys.isLoggedIn, true);
+
+    // 2. Store profile under this user's namespace.
+    await prefs.setString(PrefsKeys.profileName(email),  name);
+    await prefs.setString(PrefsKeys.profileEmail(email), email);
+
+    // 3. Reset in-memory store, then load data for this user.
+    if (mounted) {
+      final store = ItemsScope.read(context);
+      store.clearInMemory();
+      await store.load();
+    }
 
     setState(() => _isLoading = false);
 

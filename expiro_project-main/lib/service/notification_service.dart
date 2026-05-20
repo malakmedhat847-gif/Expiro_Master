@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'prefs_keys.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -56,9 +57,10 @@ class NotificationService {
 
 
   Future<({Duration duration, String label})> _getNotifyConfig() async {
-    final prefs = await SharedPreferences.getInstance();
-    final unit  = prefs.getString('notify_unit')  ?? 'days';
-    final value = prefs.getInt('notify_value')    ?? 3;
+    final prefs  = await SharedPreferences.getInstance();
+    final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
+    final unit   = prefs.getString(PrefsKeys.notifyUnit(userId))  ?? 'days';
+    final value  = prefs.getInt(PrefsKeys.notifyValue(userId))    ?? 3;
 
     final Duration duration =
     unit == 'months' ? Duration(days: value * 30) : Duration(days: value);
@@ -74,7 +76,8 @@ class NotificationService {
 
   Future<void> scheduleItemNotification(Item item) async {
     final prefs   = await SharedPreferences.getInstance();
-    final enabled = prefs.getBool('notifications_enabled') ?? true;
+    final userId  = prefs.getString(PrefsKeys.currentUserId) ?? '';
+    final enabled = prefs.getBool(PrefsKeys.notificationsEnabled(userId)) ?? true;
     if (!enabled) return;
 
     if (item.daysLeft < 0) {
@@ -92,7 +95,8 @@ class NotificationService {
 
   Future<void> rescheduleAll(List<Item> items) async {
     final prefs   = await SharedPreferences.getInstance();
-    final enabled = prefs.getBool('notifications_enabled') ?? true;
+    final userId  = prefs.getString(PrefsKeys.currentUserId) ?? '';
+    final enabled = prefs.getBool(PrefsKeys.notificationsEnabled(userId)) ?? true;
 
     await _plugin.cancelAll();
 
@@ -118,8 +122,9 @@ class NotificationService {
   }
 
   Future<void> setNotificationsEnabled(bool enabled, List<Item> items) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notifications_enabled', enabled);
+    final prefs  = await SharedPreferences.getInstance();
+    final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
+    await prefs.setBool(PrefsKeys.notificationsEnabled(userId), enabled);
 
     if (enabled) {
       await rescheduleAll(items);
