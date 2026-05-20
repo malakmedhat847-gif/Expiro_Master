@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../models/items.dart';
 import '../service/notification_service.dart';
+import '../service/prefs_keys.dart';
 import '../state/items_store.dart';
 import '../theme/app_colors.dart';
 
@@ -73,12 +74,13 @@ class _SettingsScreenState extends State<SettingsScreen>
      }
 
      Future<void> _loadPrefs() async {
-          final prefs = await SharedPreferences.getInstance();
+          final prefs  = await SharedPreferences.getInstance();
+          final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
           setState(() {
-               _darkMode             = prefs.getBool('dark_mode')             ?? false;
-               _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
-               _selectedUnit         = prefs.getString('notify_unit')         ?? 'days';
-               _selectedValue        = prefs.getInt('notify_value')           ?? 3;
+               _darkMode             = prefs.getBool(PrefsKeys.darkMode)                         ?? false;
+               _notificationsEnabled = prefs.getBool(PrefsKeys.notificationsEnabled(userId))    ?? true;
+               _selectedUnit         = prefs.getString(PrefsKeys.notifyUnit(userId))             ?? 'days';
+               _selectedValue        = prefs.getInt(PrefsKeys.notifyValue(userId))               ?? 3;
           });
           _playSequence();
      }
@@ -105,9 +107,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                _selectedValue = value;
                _selectedUnit  = unit;
           });
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setInt('notify_value', value);
-          await prefs.setString('notify_unit', unit);
+          final prefs  = await SharedPreferences.getInstance();
+          final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
+          await prefs.setInt(PrefsKeys.notifyValue(userId), value);
+          await prefs.setString(PrefsKeys.notifyUnit(userId), unit);
           if (_notificationsEnabled) {
                final store = ItemsScope.read(context);
                await NotificationService().rescheduleAll(store.items);

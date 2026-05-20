@@ -2,6 +2,7 @@ import 'package:expiro_project/screens/homeScreen.dart';
 import 'package:expiro_project/screens/login_screen.dart';
 import 'package:expiro_project/screens/onbording_screen.dart';
 import 'package:expiro_project/service/notification_service.dart';
+import 'package:expiro_project/service/prefs_keys.dart';
 import 'package:expiro_project/state/items_store.dart';
 import 'package:expiro_project/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -42,13 +43,13 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _loadTheme() async {
     final prefs  = await SharedPreferences.getInstance();
-    final isDark = prefs.getBool('dark_mode') ?? false;
+    final isDark = prefs.getBool(PrefsKeys.darkMode) ?? false;
     setState(() => _themeMode = isDark ? ThemeMode.dark : ThemeMode.light);
   }
 
   Future<void> setTheme(bool isDark) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('dark_mode', isDark);
+    await prefs.setBool(PrefsKeys.darkMode, isDark);
     setState(() => _themeMode = isDark ? ThemeMode.dark : ThemeMode.light);
   }
 
@@ -227,15 +228,15 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasLaunched = prefs.getBool('has_launched') ?? false;
+    final prefs      = await SharedPreferences.getInstance();
+    final hasLaunched = prefs.getBool(PrefsKeys.hasLaunched) ?? false;
     if (!hasLaunched) {
-      await prefs.setBool('has_launched', true);
+      await prefs.setBool(PrefsKeys.hasLaunched, true);
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/onboarding');
       return;
     }
-    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final isLoggedIn = prefs.getBool(PrefsKeys.isLoggedIn) ?? false;
     if (!mounted) return;
     if (isLoggedIn) {
       Navigator.pushReplacementNamed(context, '/home');

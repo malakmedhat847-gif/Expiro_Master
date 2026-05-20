@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/items.dart';
+import '../service/prefs_keys.dart';
 import '../state/items_store.dart';
 import '../theme/app_colors.dart';
 import 'login_screen.dart';
@@ -77,10 +78,11 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs  = await SharedPreferences.getInstance();
+    final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
     setState(() {
-      _userName       = prefs.getString('profile_name')  ?? 'Your Name';
-      _userEmail      = prefs.getString('profile_email') ?? 'your@email.com';
+      _userName       = prefs.getString(PrefsKeys.profileName(userId))  ?? 'Your Name';
+      _userEmail      = prefs.getString(PrefsKeys.profileEmail(userId)) ?? 'your@email.com';
       _loadingProfile = false;
     });
     _playSequence();
@@ -119,9 +121,10 @@ class _ProfilePageState extends State<ProfilePage>
         nameController:  nameCtrl,
         emailController: emailCtrl,
         onSave: (name, email) async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('profile_name',  name);
-          await prefs.setString('profile_email', email);
+          final prefs  = await SharedPreferences.getInstance();
+          final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
+          await prefs.setString(PrefsKeys.profileName(userId),  name);
+          await prefs.setString(PrefsKeys.profileEmail(userId), email);
           setState(() { _userName = name; _userEmail = email; });
         },
       ),
@@ -454,12 +457,23 @@ class _ProfilePageState extends State<ProfilePage>
                       label: label,
                       color: color,
                       index: i,
-                      onTap: () {
+                      onTap: () async {
                         if (label == 'Log Out') {
-                          Navigator.pushAndRemoveUntil(context,
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
-                                (route) => false,
-                          );
+                          // 1. Clear the session flags so SplashScreen routes to /login next time.
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool(PrefsKeys.isLoggedIn, false);
+                          await prefs.remove(PrefsKeys.currentUserId);
+                          // 2. Wipe in-memory store so no stale data bleeds to the next user.
+                          if (context.mounted) {
+                            ItemsScope.read(context).clearInMemory();
+                          }
+                          // 3. Navigate to Login, removing all previous routes.
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(context,
+                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                  (route) => false,
+                            );
+                          }
                         } else {
                           Navigator.push(context,
                             MaterialPageRoute(builder: (_) => SettingsScreen(

@@ -1,5 +1,7 @@
 import 'package:expiro_project/screens/homeScreen.dart';
 import 'package:expiro_project/screens/registerScreen.dart';
+import 'package:expiro_project/service/prefs_keys.dart';
+import 'package:expiro_project/state/items_store.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -132,13 +134,24 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_email', email);
-    await prefs.setBool('is_logged_in', true);
-    // If no name saved yet, use the part before @
-    final existingName = prefs.getString('profile_name') ?? '';
+
+    // 1. Identify the user FIRST so all subsequent namespaced writes are correct.
+    await prefs.setString(PrefsKeys.currentUserId, email);
+    await prefs.setBool(PrefsKeys.isLoggedIn, true);
+
+    // 2. Save profile under this user's namespace.
+    await prefs.setString(PrefsKeys.profileEmail(email), email);
+    final existingName = prefs.getString(PrefsKeys.profileName(email)) ?? '';
     if (existingName.isEmpty || existingName == 'Your Name') {
       final namePart = email.contains('@') ? email.split('@')[0] : email;
-      await prefs.setString('profile_name', namePart);
+      await prefs.setString(PrefsKeys.profileName(email), namePart);
+    }
+
+    // 3. Reset in-memory store state, then load data for this user.
+    if (mounted) {
+      final store = ItemsScope.read(context);
+      store.clearInMemory();
+      await store.load();
     }
 
     setState(() => _isLoading = false);

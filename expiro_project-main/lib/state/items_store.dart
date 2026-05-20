@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/items.dart';
 import '../service/notification_service.dart';
+import '../service/prefs_keys.dart';
 
 
 
@@ -31,11 +32,14 @@ class ItemsStore extends ChangeNotifier {
     }).toList();
   }
 
+  /// Loads items for the CURRENT user (reads userId from SharedPreferences).
   Future<void> load() async {
     try {
-      final prefs     = await SharedPreferences.getInstance();
-      final itemsJson = prefs.getString('items');
-      final idCounter = prefs.getInt('idCounter');
+      final prefs  = await SharedPreferences.getInstance();
+      final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
+
+      final itemsJson = prefs.getString(PrefsKeys.items(userId));
+      final idCounter = prefs.getInt(PrefsKeys.idCounter(userId));
 
       if (itemsJson != null) {
         final decoded = jsonDecode(itemsJson) as List<dynamic>;
@@ -43,9 +47,15 @@ class ItemsStore extends ChangeNotifier {
             .map((e) => Item.fromJson(e as Map<String, dynamic>))
             .toList();
         _idCounter = idCounter ?? _items.length;
+      } else {
+        // No data for this user — start fresh.
+        _items     = [];
+        _idCounter = 0;
       }
     } catch (e) {
       debugPrint('ItemsStore.load error: $e');
+      _items     = [];
+      _idCounter = 0;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -56,13 +66,25 @@ class ItemsStore extends ChangeNotifier {
     }
   }
 
+  /// Clears in-memory state WITHOUT touching SharedPreferences.
+  /// Call this on logout so the next user starts with an empty store
+  /// before [load] is called for their account.
+  void clearInMemory() {
+    _items     = [];
+    _idCounter = 0;
+    _isLoading = true;
+    notifyListeners();
+  }
+
+  /// Persists items under the CURRENT user's namespace.
   Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs  = await SharedPreferences.getInstance();
+    final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
     await prefs.setString(
-      'items',
+      PrefsKeys.items(userId),
       jsonEncode(_items.map((e) => e.toJson()).toList()),
     );
-    await prefs.setInt('idCounter', _idCounter);
+    await prefs.setInt(PrefsKeys.idCounter(userId), _idCounter);
   }
 
 
@@ -148,15 +170,17 @@ class ItemsStore extends ChangeNotifier {
   }
 
 
+  /// Clears ALL items for the current user from both memory and SharedPreferences.
   Future<void> clearAll() async {
     await NotificationService().cancelAll();
     _items.clear();
     _idCounter = 0;
     notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('items');
-    await prefs.remove('idCounter');
+    final prefs  = await SharedPreferences.getInstance();
+    final userId = prefs.getString(PrefsKeys.currentUserId) ?? '';
+    await prefs.remove(PrefsKeys.items(userId));
+    await prefs.remove(PrefsKeys.idCounter(userId));
   }
 }
 
